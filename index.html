@@ -200,7 +200,9 @@ function buildLights() {
   sun.shadow.camera.right = sun.shadow.camera.top = 200;
   scene.add(sun);
 
-  scene.add(Object.assign(new THREE.PointLight(0x4466ff,1.5,300), {position: new THREE.Vector3(-60,40,-60)}));
+  const fillLight = new THREE.PointLight(0x4466ff,1.5,300);
+  fillLight.position.set(-60,40,-60);
+  scene.add(fillLight);
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -416,18 +418,16 @@ function buildCar() {
   cabin.position.set(0,.93,-.3); cabin.castShadow=true; carMesh.add(cabin);
 
   // Windshield
-  carMesh.add(Object.assign(
-    new THREE.Mesh(new THREE.BoxGeometry(1.7,.55,.08),
-      new THREE.MeshLambertMaterial({color:0x88ccff,transparent:true,opacity:.55})),
-    {position: new THREE.Vector3(0,1.08,.77)}
-  ));
+  const wind = new THREE.Mesh(new THREE.BoxGeometry(1.7,.55,.08),
+    new THREE.MeshLambertMaterial({color:0x88ccff,transparent:true,opacity:.55}));
+  wind.position.set(0,1.08,.77);
+  carMesh.add(wind);
 
   // Spoiler
-  carMesh.add(Object.assign(
-    new THREE.Mesh(new THREE.BoxGeometry(2.1,.08,.65),
-      new THREE.MeshLambertMaterial({color:0x1a1a1a})),
-    {position:new THREE.Vector3(0,1.15,-2.1)}
-  ));
+  const spoiler = new THREE.Mesh(new THREE.BoxGeometry(2.1,.08,.65),
+    new THREE.MeshLambertMaterial({color:0x1a1a1a}));
+  spoiler.position.set(0,1.15,-2.1);
+  carMesh.add(spoiler);
 
   // ── Wheels ──
   // Wheel local positions [x, zOffset]  (y is handled separately via suspension)
@@ -477,11 +477,10 @@ function buildCar() {
 
   // Headlights
   [-0.75,0.75].forEach(x => {
-    carMesh.add(Object.assign(
-      new THREE.Mesh(new THREE.BoxGeometry(.38,.22,.08),
-        new THREE.MeshBasicMaterial({color:0xffffaa})),
-      {position:new THREE.Vector3(x,.38,2.32)}
-    ));
+    const hl = new THREE.Mesh(new THREE.BoxGeometry(.38,.22,.08),
+      new THREE.MeshBasicMaterial({color:0xffffaa}));
+    hl.position.set(x,.38,2.32);
+    carMesh.add(hl);
     const spot = new THREE.SpotLight(0xffffaa,3,35,.38,.5);
     spot.position.set(x,.38,2.32);
     spot.target.position.set(x*1.1,-2,12);
@@ -490,11 +489,10 @@ function buildCar() {
 
   // Tail lights
   [-0.75,0.75].forEach(x => {
-    carMesh.add(Object.assign(
-      new THREE.Mesh(new THREE.BoxGeometry(.5,.22,.08),
-        new THREE.MeshBasicMaterial({color:0xff1111})),
-      {position:new THREE.Vector3(x,.38,-2.32)}
-    ));
+    const tl = new THREE.Mesh(new THREE.BoxGeometry(.5,.22,.08),
+      new THREE.MeshBasicMaterial({color:0xff1111}));
+    tl.position.set(x,.38,-2.32);
+    carMesh.add(tl);
   });
 
   carMesh.position.copy(CAR.pos);
