@@ -587,6 +587,164 @@ function buildCar() {
   scene.add(carMesh);
 }
 
+// ═══════════════════════════════════════════════════════════
+//  INPUT — keyboard / gamepad / touch
+// ═══════════════════════════════════════════════════════════
+let inputMode = 'keyboard';
+
+// Unified virtual input — all sources write here
+const K = { accel:false, brake:false, left:false, right:false, hb:false };
+
+// ── Keyboard ──────────────────────────────────────────────
+const KB = {};
+window.addEventListener('keydown', e => {
+  KB[e.code] = true;
+  if (['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)) e.preventDefault();
+  if (e.code === 'KeyE') openEditor();
+  if (e.code === 'KeyR') resetCar();
+});
+window.addEventListener('keyup', e => { KB[e.code] = false; });
+
+function readKeyboard() {
+  K.accel = !!(KB['KeyW'] || KB['ArrowUp']);
+  K.brake = !!(KB['KeyS'] || KB['ArrowDown']);
+  K.left  = !!(KB['KeyA'] || KB['ArrowLeft']);
+  K.right = !!(KB['KeyD'] || KB['ArrowRight']);
+  K.hb    = !!KB['Space'];
+}
+
+// ── Gamepad ───────────────────────────────────────────────
+let gpIndex = -1;
+window.addEventListener('gamepadconnected', e => {
+  gpIndex = e.gamepad.index;
+  document.getElementById('gamepad-indicator').classList.add('active');
+});
+window.addEventListener('gamepaddisconnected', e => {
+  if (e.gamepad.index === gpIndex) {
+    gpIndex = -1;
+    document.getElementById('gamepad-indicator').classList.remove('active');
+  }
+});
+
+function readGamepad() {
+  if (gpIndex < 0) return;
+  const gp = navigator.getGamepads()[gpIndex];
+  if (!gp) return;
+  const DEAD = 0.15;
+  const axX  = gp.axes[0] || 0;
+  const axY  = gp.axes[1] || 0;
+  K.accel = !!(gp.buttons[0]?.pressed || gp.buttons[7]?.pressed || axY < -DEAD || gp.buttons[12]?.pressed);
+  K.brake = !!(gp.buttons[1]?.pressed || gp.buttons[6]?.pressed || axY >  DEAD || gp.buttons[13]?.pressed);
+  K.left  = !!(axX < -DEAD || gp.buttons[14]?.pressed);
+  K.right = !!(axX >  DEAD || gp.buttons[15]?.pressed);
+  K.hb    = !!(gp.buttons[2]?.pressed || gp.buttons[4]?.pressed || gp.buttons[5]?.pressed);
+}
+
+// ── Touch ─────────────────────────────────────────────────
+const joyState  = { active:false, id:-1, dx:0, dy:0 };
+const touchBtns = { accel:false, brake:false, hb:false };
+
+function initTouch() {
+  const joyZone = document.getElementById('joy-zone');
+  if (!joyZone) return;
+  const knob = document.getElementById('joy-knob');
+  const JR   = 50;
+
+  function joyXY(touch) {
+    const r = joyZone.getBoundingClientRect();
+    return { x: touch.clientX - r.left - 80, y: touch.clientY - r.top - 80 };
+  }
+
+  joyZone.addEventListener('touchstart', e => {
+    e.preventDefault();
+    const t = e.changedTouches[0];
+    joyState.active = true; joyState.id = t.identifier;
+    const p = joyXY(t); joyState.dx = p.x; joyState.dy = p.y;
+    knob.style.transform = `translate(${joyState.dx}px,${joyState.dy}px)`;
+  }, { passive:false });
+
+  window.addEventListener('touchmove', e => {
+    if (!joyState.active) return;
+    e.preventDefault();
+    for (const t of e.changedTouches) {
+      if (t.identifier === joyState.id) {
+        const p   = joyXY(t);
+        const len = Math.sqrt(p.x*p.x + p.y*p.y);
+        if (len > JR) { p.x *= JR/len; p.y *= JR/len; }
+        joyState.dx = p.x; joyState.dy = p.y;
+        knob.style.transform = `translate(${joyState.dx}px,${joyState.dy}px)`;
+      }
+    }
+  }, { passive:false });
+
+  window.addEventListener('touchend', e => {
+    for (const t of e.changedTouches) {
+      if (t.identifier === joyState.id) {
+        joyState.active = false; joyState.dx = 0; joyState.dy = 0;
+        knob.style.transform = 'translate(0,0)';
+      }
+    }
+  });
+
+  function bindBtn(id, key) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('touchstart', e => { e.preventDefault(); touchBtns[key] = true;  el.classList.add('pressed'); },    { passive:false });
+    el.addEventListener('touchend',   e => { e.preventDefault(); touchBtns[key] = false; el.classList.remove('pressed'); }, { passive:false });
+    el.addEventListener('touchcancel',e => { touchBtns[key] = false; el.classList.remove('pressed'); });
+  }
+  bindBtn('btn-accel', 'accel');
+  bindBtn('btn-brake', 'brake');
+  bindBtn('btn-hb',    'hb');
+}
+
+function readTouch() {
+  const DEAD = 0.25;
+  const nx   = joyState.dx / 50;
+  const ny   = joyState.dy / 50;
+  K.left  = nx < -DEAD;
+  K.right = nx >  DEAD;
+  K.accel = touchBtns.accel || ny < -DEAD;
+  K.brake = touchBtns.brake || ny >  DEAD;
+  K.hb    = touchBtns.hb;
+}
+
+// ── Master read (called each physics frame) ───────────────
+function readInput() {
+  if      (inputMode === 'keyboard') readKeyboard();
+  else if (inputMode === 'gamepad')  readGamepad();
+  else if (inputMode === 'touch')    readTouch();
+}
+
+// ── Selector ──────────────────────────────────────────────
+function setHints(html) {
+  const el = document.getElementById('hints');
+  if (el) el.innerHTML = html;
+}
+
+window.selectInput = function(mode) {
+  inputMode = mode;
+  document.getElementById('input-selector').style.display = 'none';
+
+  const tc = document.getElementById('touch-controls');
+  if (mode === 'touch') {
+    tc.classList.add('active');
+    setHints('Joystick → dirección<br>▲ Acelerar &nbsp; ▼ Frenar<br>HB → freno de mano');
+  } else {
+    tc.classList.remove('active');
+  }
+
+  if (mode === 'gamepad') {
+    setHints('A / RT &nbsp;Acelerar<br>B / LT &nbsp;Frenar<br>Stick &nbsp;&nbsp;Dirección<br>X/LB &nbsp;&nbsp;Hand-brake');
+  }
+  if (mode === 'keyboard') {
+    setHints('W / ↑ &nbsp;Acelerar<br>S / ↓ &nbsp;Frenar<br>A / ← &nbsp;Izquierda<br>D / → &nbsp;Derecha<br>ESPACIO &nbsp;Hand-brake<br>R &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Reset<br>E &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Editor');
+  }
+
+  // Start race now that input is chosen
+  if (gameMode === 'race') startCountdown();
+};
+
 // ── PHYSICS ───────────────────────────────────────────────
 const MAX_SPEED    = 0.75;
 const MAX_REV      = 0.20;
