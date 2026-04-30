@@ -71,6 +71,50 @@ canvas#c { display:block; width:100vw; height:100vh; }
 #loading p  { color:#ffffff55; letter-spacing:4px; font-size:13px; }
 .pbar { width:220px; height:2px; background:#ffffff11; margin-top:32px; border-radius:1px; }
 .pfill{ height:100%; background:#00ffaa; width:0%; transition:width .3s; border-radius:1px; }
+
+/* ── INPUT SELECTOR ── */
+#input-selector { position:fixed; top:0; left:0; width:100%; height:100%;
+  background:#0a0a0fee; z-index:200; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; gap:20px; }
+#input-selector h2 { color:#00ffaa; font-size:20px; letter-spacing:6px; margin-bottom:10px; }
+.isel-btn { width:260px; padding:18px 0; font-family:'Courier New',monospace; font-size:13px;
+  letter-spacing:3px; cursor:pointer; border:1px solid #ffffff33; color:#fff;
+  background:transparent; transition:all .25s; text-align:center; }
+.isel-btn:hover { background:#ffffff15; border-color:#00ffaa88; color:#00ffaa; }
+.isel-btn span { display:block; font-size:22px; margin-bottom:6px; }
+
+/* ── TOUCH CONTROLS ── */
+#touch-controls { position:fixed; bottom:0; left:0; width:100%; height:200px;
+  pointer-events:none; z-index:20; display:none; }
+#touch-controls.active { display:block; }
+
+/* Left joystick zone */
+#joy-zone { position:absolute; bottom:20px; left:20px; width:160px; height:160px;
+  pointer-events:all; }
+#joy-base { position:absolute; top:0; left:0; width:160px; height:160px;
+  border-radius:50%; border:2px solid #ffffff22; background:#ffffff08; }
+#joy-knob { position:absolute; width:60px; height:60px; border-radius:50%;
+  background:#ffffff33; border:2px solid #ffffff66;
+  top:50px; left:50px; transform:translate(0,0); transition:none; }
+
+/* Right action buttons */
+#touch-btns { position:absolute; bottom:20px; right:20px; display:grid;
+  grid-template-columns:70px 70px; grid-template-rows:70px 70px; gap:10px;
+  pointer-events:all; }
+.tch-btn { border-radius:50%; border:2px solid #ffffff33; background:#ffffff08;
+  display:flex; align-items:center; justify-content:center;
+  font-size:24px; color:#ffffff88; font-family:sans-serif; cursor:pointer;
+  user-select:none; -webkit-user-select:none; transition:background .1s; }
+.tch-btn.pressed { background:#ffffff28; border-color:#ffffff88; }
+#btn-accel { grid-column:2; grid-row:1; border-color:#00ffaa44; color:#00ffaa88; }
+#btn-brake { grid-column:2; grid-row:2; border-color:#ff444444; color:#ff6644; }
+#btn-hb    { grid-column:1; grid-row:2; border-color:#ffdd0044; color:#ffdd0088; font-size:14px; letter-spacing:1px; }
+
+/* ── GAMEPAD INDICATOR ── */
+#gamepad-indicator { position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
+  color:#ffffff33; font-size:11px; letter-spacing:3px; z-index:20;
+  pointer-events:none; display:none; }
+#gamepad-indicator.active { display:block; }
 </style>
 </head>
 <body>
@@ -80,6 +124,36 @@ canvas#c { display:block; width:100vw; height:100vh; }
   <p>INICIANDO MOTORES...</p>
   <div class="pbar"><div class="pfill" id="pf"></div></div>
 </div>
+
+<!-- INPUT SELECTOR -->
+<div id="input-selector">
+  <h2>ELEGÍ TU CONTROL</h2>
+  <button class="isel-btn" onclick="selectInput('keyboard')">
+    <span>⌨️</span>TECLADO
+  </button>
+  <button class="isel-btn" onclick="selectInput('gamepad')">
+    <span>🎮</span>JOYSTICK / GAMEPAD
+  </button>
+  <button class="isel-btn" onclick="selectInput('touch')">
+    <span>📱</span>PANTALLA TÁCTIL
+  </button>
+</div>
+
+<!-- TOUCH CONTROLS -->
+<div id="touch-controls">
+  <div id="joy-zone">
+    <div id="joy-base"></div>
+    <div id="joy-knob"></div>
+  </div>
+  <div id="touch-btns">
+    <div class="tch-btn" id="btn-hb">HB</div>
+    <div class="tch-btn" id="btn-accel">▲</div>
+    <div style="grid-column:1;grid-row:1"></div>
+    <div class="tch-btn" id="btn-brake">▼</div>
+  </div>
+</div>
+
+<div id="gamepad-indicator">🎮 GAMEPAD CONECTADO</div>
 
 <canvas id="c"></canvas>
 
@@ -113,6 +187,7 @@ canvas#c { display:block; width:100vw; height:100vh; }
     <button class="tbtn on" id="btn-race" onclick="setMode('race')">CARRERA</button>
     <button class="tbtn"    id="btn-free" onclick="setMode('free')">LIBRE</button>
     <button class="tbtn"    onclick="openEditor()">EDITOR</button>
+    <button class="tbtn"    onclick="document.getElementById('input-selector').style.display='flex'">CONTROL</button>
   </div>
 
   <div id="countdown"></div>
@@ -401,107 +476,113 @@ function buildCar() {
   carMesh = new THREE.Group();
   wheelMeshes = [];
 
-  // ── Body ──
-  carBodyMesh = new THREE.Mesh(
-    new THREE.BoxGeometry(2.2,.62,4.6),
-    new THREE.MeshLambertMaterial({color:0xff2200})
-  );
-  carBodyMesh.position.y = .31;
-  carBodyMesh.castShadow = true;
-  carMesh.add(carBodyMesh);
+  const matRed    = new THREE.MeshLambertMaterial({color:0xff2200});
+  const matDark   = new THREE.MeshLambertMaterial({color:0xcc1a00});
+  const matCarbon = new THREE.MeshLambertMaterial({color:0x1a1a1a});
+  const matGlass  = new THREE.MeshLambertMaterial({color:0x88ccff,transparent:true,opacity:.55});
+  const matHL     = new THREE.MeshBasicMaterial({color:0xffffaa});
+  const matTL     = new THREE.MeshBasicMaterial({color:0xff1111});
 
-  // Cabin
-  const cabin = new THREE.Mesh(
-    new THREE.BoxGeometry(1.85,.65,2.3),
-    new THREE.MeshLambertMaterial({color:0xcc1a00})
-  );
-  cabin.position.set(0,.93,-.3); cabin.castShadow=true; carMesh.add(cabin);
+  function box(w,h,d,mat,px,py,pz,rx) {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(w,h,d), mat);
+    m.position.set(px,py,pz);
+    if(rx) m.rotation.x = rx;
+    m.castShadow = true;
+    carMesh.add(m);
+    return m;
+  }
 
-  // Windshield
-  const wind = new THREE.Mesh(new THREE.BoxGeometry(1.7,.55,.08),
-    new THREE.MeshLambertMaterial({color:0x88ccff,transparent:true,opacity:.55}));
-  wind.position.set(0,1.08,.77);
-  carMesh.add(wind);
+  // Body – all static, NO individual rotation overrides in updateCarMesh
+  carBodyMesh = box(2.2,.55,4.5, matRed,    0, .28,  0);
+  box(1.8,.35,.8,  matRed,    0, .18,  2.4);    // nose
+  box(2.0,.22,.6,  matDark,   0, .13, -2.3);    // diffuser
+  box(1.7,.65,2.1, matDark,   0, .86, -.2);     // cabin
+  box(1.55,.5,.08, matGlass,  0, 1.0,  .82, -.28); // windshield F
+  box(1.55,.42,.08,matGlass,  0, .94,-1.25,  .32); // windshield R
+  box(2.2,.07,.6,  matCarbon, 0,1.18,-2.05);    // spoiler blade
+  box(.1,.52,.1,   matCarbon,  .85,.9,-2.05);   // spoiler pole R
+  box(.1,.52,.1,   matCarbon, -.85,.9,-2.05);   // spoiler pole L
+  box(.12,.2,3.8,  matCarbon,  1.17,.11,-.1);   // skirt R
+  box(.12,.2,3.8,  matCarbon, -1.17,.11,-.1);   // skirt L
 
-  // Spoiler
-  const spoiler = new THREE.Mesh(new THREE.BoxGeometry(2.1,.08,.65),
-    new THREE.MeshLambertMaterial({color:0x1a1a1a}));
-  spoiler.position.set(0,1.15,-2.1);
-  carMesh.add(spoiler);
+  // Headlights
+  [-.72,.72].forEach(x => box(.34,.17,.08, matHL, x,.28,2.8));
+  // Tail lights
+  [-.72,.72].forEach(x => box(.44,.17,.08, matTL, x,.28,-2.62));
 
-  // ── Wheels ──
-  // Wheel local positions [x, zOffset]  (y is handled separately via suspension)
-  const WHEEL_DEFS = [
-    { x:-1.18, z: 1.5, front:true  },  // FL
-    { x: 1.18, z: 1.5, front:true  },  // FR
-    { x:-1.18, z:-1.5, front:false },  // RL
-    { x: 1.18, z:-1.5, front:false },  // RR
-  ];
+  // ── WHEELS: two-group hierarchy ──────────────────────────────────────
+  // steerGroup (parent, handles Y = steering, sits at wheel position)
+  //   └─ rollGroup  (child,  handles X = spinning)
+  //        ├─ tire mesh  (rotation.z = PI/2 at build time, never touched again)
+  //        └─ rim mesh   (same)
+  //
+  // This separation is the KEY fix: Three.js Euler order ZYX means if you
+  // set rotation.x AND rotation.y on the same object you get gimbal issues.
+  // Separating them into parent/child avoids it completely.
 
-  const tireGeo = new THREE.CylinderGeometry(.42,.42,.36,18);
+  const tireGeo = new THREE.CylinderGeometry(.42,.42,.38,20);
   const tireMat = new THREE.MeshLambertMaterial({color:0x111111});
-  const rimGeo  = new THREE.CylinderGeometry(.26,.26,.38,12);
-  const rimMat  = new THREE.MeshLambertMaterial({color:0xbbbbbb});
+  const rimGeo  = new THREE.CylinderGeometry(.27,.27,.40,14);
+  const rimMat  = new THREE.MeshLambertMaterial({color:0xcccccc});
+  const discGeo = new THREE.CylinderGeometry(.18,.18,.06,10);
+  const discMat = new THREE.MeshLambertMaterial({color:0x555555});
 
-  WHEEL_DEFS.forEach(def => {
-    // Each wheel is a GROUP so we can rotate it on X (roll) without fighting steer
-    const wGrp = new THREE.Group();
-    wGrp.position.set(def.x, .42, def.z);
+  [{x:-1.18,z:1.6,front:true},{x:1.18,z:1.6,front:true},
+   {x:-1.18,z:-1.5,front:false},{x:1.18,z:-1.5,front:false}].forEach(def => {
 
-    // Pivot inside group – tire lies on X axis (CylinderGeometry default Y axis → rotate Z 90°)
+    const steerGrp = new THREE.Group();
+    steerGrp.position.set(def.x, .42, def.z);
+    steerGrp.userData.front = def.front;
+    steerGrp.userData.baseY = .42;
+    carMesh.add(steerGrp);
+
+    const rollGrp = new THREE.Group();
+    steerGrp.add(rollGrp);
+    steerGrp.userData.roll = rollGrp;
+
+    // Tire: CylinderGeometry spin axis = local Y.
+    // We rotate Z 90° once so the spin axis aligns with world X (the axle).
+    // After that, rollGrp.rotation.x drives the spinning correctly.
     const tire = new THREE.Mesh(tireGeo, tireMat);
     tire.rotation.z = Math.PI/2;
     tire.castShadow = true;
-    wGrp.add(tire);
+    rollGrp.add(tire);
 
-    const rim  = new THREE.Mesh(rimGeo,  rimMat);
+    const rim = new THREE.Mesh(rimGeo, rimMat);
     rim.rotation.z = Math.PI/2;
-    wGrp.add(rim);
+    rollGrp.add(rim);
 
-    // Brake disc
-    const disc = new THREE.Mesh(
-      new THREE.CylinderGeometry(.18,.18,.05,12),
-      new THREE.MeshLambertMaterial({color:0x555555})
-    );
+    // Brake disc – offset outward on X, same orientation
+    const disc = new THREE.Mesh(discGeo, discMat);
     disc.rotation.z = Math.PI/2;
-    disc.position.x = def.x > 0 ? .19 : -.19;
-    wGrp.add(disc);
+    disc.position.x = def.x > 0 ? .21 : -.21;
+    rollGrp.add(disc);
 
-    wGrp.userData.front = def.front;
-    wGrp.userData.baseZ  = def.z;
-    wGrp.userData.side   = def.x > 0 ? 1 : -1;
-
-    carMesh.add(wGrp);
-    wheelMeshes.push(wGrp);
-  });
-
-  // Headlights
-  [-0.75,0.75].forEach(x => {
-    const hl = new THREE.Mesh(new THREE.BoxGeometry(.38,.22,.08),
-      new THREE.MeshBasicMaterial({color:0xffffaa}));
-    hl.position.set(x,.38,2.32);
-    carMesh.add(hl);
-    const spot = new THREE.SpotLight(0xffffaa,3,35,.38,.5);
-    spot.position.set(x,.38,2.32);
-    spot.target.position.set(x*1.1,-2,12);
-    carMesh.add(spot); carMesh.add(spot.target);
-  });
-
-  // Tail lights
-  [-0.75,0.75].forEach(x => {
-    const tl = new THREE.Mesh(new THREE.BoxGeometry(.5,.22,.08),
-      new THREE.MeshBasicMaterial({color:0xff1111}));
-    tl.position.set(x,.38,-2.32);
-    carMesh.add(tl);
+    wheelMeshes.push(steerGrp);
   });
 
   carMesh.position.copy(CAR.pos);
+  carMesh.rotation.y = CAR.rot;
   scene.add(carMesh);
 }
 
+
 // ═══════════════════════════════════════════════════════════
-//  COLLISION – car vs track borders
+//  COLLISION
 // ═══════════════════════════════════════════════════════════
+
+// Static AABB colliders [cx, cz, half-width, half-depth]
+// Add any scenery box here to give it a collision body
+const STATIC_COLLIDERS = [
+  // Grandstand
+  [0, 18, 18, 3.5],
+  // Tire barriers [x, z, hw, hd]
+  [90,-28, 4.5,.8], [90,-80, 4.5,.8], [55,-116, 4.5,.8], [55,5, 4.5,.8],
+  // Light poles (small radius = 0.5)
+  [-18,18,.5,.5],[18,18,.5,.5],[0,-130,.5,.5],[95,-55,.5,.5],[-75,-55,.5,.5],
+];
+const CAR_RADIUS = 1.3; // collision sphere radius
+
 function closestPointOnSegment(p, a, b) {
   const ab = b.clone().sub(a);
   const t  = Math.max(0, Math.min(1, p.clone().sub(a).dot(ab) / ab.lengthSq()));
@@ -509,55 +590,225 @@ function closestPointOnSegment(p, a, b) {
 }
 
 function resolveTrackCollision() {
-  // Find the nearest segment mid to limit search space
   const cp = CAR.pos.clone(); cp.y = 0;
 
+  // ── Track wall collisions ──────────────────────────────
   let best = Infinity, bestIdx = 0;
   trackBounds.forEach((b,i) => {
     const d = cp.distanceTo(b.mid); if(d<best){best=d;bestIdx=i;}
   });
 
-  // Check a window around the nearest segment
   const radius = 25;
-  let pushed = false;
   for(let di=-radius; di<=radius; di++) {
     const b = trackBounds[(bestIdx+di+trackBounds.length)%trackBounds.length];
 
-    // Left wall
-    const nearL = closestPointOnSegment(cp, b.lA, b.lB);
-    nearL.y = 0;
+    const nearL = closestPointOnSegment(cp, b.lA, b.lB); nearL.y=0;
     const dL = cp.distanceTo(nearL);
-    if(dL < 1.2) {
-      const push = b.nL.clone().multiplyScalar(1.2 - dL);
-      CAR.pos.add(push);
-      CAR.speed *= 0.55;
-      pushed = true;
+    if(dL < CAR_RADIUS) {
+      CAR.pos.addScaledVector(b.nL, CAR_RADIUS - dL);
+      CAR.speed *= 0.5;
     }
 
-    // Right wall
-    const nearR = closestPointOnSegment(cp, b.rA, b.rB);
-    nearR.y = 0;
+    const nearR = closestPointOnSegment(cp, b.rA, b.rB); nearR.y=0;
     const dR = cp.distanceTo(nearR);
-    if(dR < 1.2) {
-      const push = b.nR.clone().multiplyScalar(1.2 - dR);
-      CAR.pos.add(push);
-      CAR.speed *= 0.55;
-      pushed = true;
+    if(dR < CAR_RADIUS) {
+      CAR.pos.addScaledVector(b.nR, CAR_RADIUS - dR);
+      CAR.speed *= 0.5;
     }
   }
+
+  // ── Static object AABB collisions ─────────────────────
+  STATIC_COLLIDERS.forEach(([cx,cz,hw,hd]) => {
+    const dx = CAR.pos.x - cx;
+    const dz = CAR.pos.z - cz;
+    const overlapX = (hw + CAR_RADIUS) - Math.abs(dx);
+    const overlapZ = (hd + CAR_RADIUS) - Math.abs(dz);
+
+    if(overlapX > 0 && overlapZ > 0) {
+      // Push out along axis of least overlap
+      if(overlapX < overlapZ) {
+        CAR.pos.x += dx > 0 ? overlapX : -overlapX;
+      } else {
+        CAR.pos.z += dz > 0 ? overlapZ : -overlapZ;
+      }
+      CAR.speed *= 0.45;
+    }
+  });
 }
 
 // ═══════════════════════════════════════════════════════════
-//  INPUT
+//  INPUT — keyboard / gamepad / touch
 // ═══════════════════════════════════════════════════════════
-const K = {};
+let inputMode = 'keyboard'; // 'keyboard' | 'gamepad' | 'touch'
+
+// Virtual input state — all input sources write here
+const K = { accel:false, brake:false, left:false, right:false, hb:false };
+
+// ── Keyboard ──────────────────────────────────────────────
+const KB = {};
 window.addEventListener('keydown', e => {
-  K[e.code]=true;
+  KB[e.code]=true;
   if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)) e.preventDefault();
   if(e.code==='KeyE') openEditor();
   if(e.code==='KeyR') resetCar();
 });
-window.addEventListener('keyup', e => { K[e.code]=false; });
+window.addEventListener('keyup', e => { KB[e.code]=false; });
+
+function readKeyboard() {
+  K.accel = !!(KB['KeyW']||KB['ArrowUp']);
+  K.brake = !!(KB['KeyS']||KB['ArrowDown']);
+  K.left  = !!(KB['KeyA']||KB['ArrowLeft']);
+  K.right = !!(KB['KeyD']||KB['ArrowRight']);
+  K.hb    = !!KB['Space'];
+}
+
+// ── Gamepad ───────────────────────────────────────────────
+let gpIndex = -1;
+window.addEventListener('gamepadconnected', e => {
+  gpIndex = e.gamepad.index;
+  document.getElementById('gamepad-indicator').classList.add('active');
+  if(inputMode==='gamepad') showGamepadHints();
+});
+window.addEventListener('gamepaddisconnected', e => {
+  if(e.gamepad.index===gpIndex) {
+    gpIndex=-1;
+    document.getElementById('gamepad-indicator').classList.remove('active');
+  }
+});
+
+function readGamepad() {
+  if(gpIndex<0) return;
+  const gp = navigator.getGamepads()[gpIndex];
+  if(!gp) return;
+  // Standard mapping: axes[0]=Left stick X, axes[1]=Left stick Y
+  // buttons[0]=A(accel), buttons[1]=B(brake), buttons[6]=LT(hb)
+  // Also support D-pad: buttons[12]=up,13=down,14=left,15=right
+  const axX  = gp.axes[0] || 0;
+  const axY  = gp.axes[1] || 0;
+  const DEAD = 0.15;
+
+  K.accel = gp.buttons[0]?.pressed || gp.buttons[7]?.pressed || axY < -DEAD || gp.buttons[12]?.pressed;
+  K.brake = gp.buttons[1]?.pressed || gp.buttons[6]?.pressed || axY >  DEAD || gp.buttons[13]?.pressed;
+  K.left  = axX < -DEAD || gp.buttons[14]?.pressed;
+  K.right = axX >  DEAD || gp.buttons[15]?.pressed;
+  K.hb    = gp.buttons[2]?.pressed || gp.buttons[4]?.pressed || gp.buttons[5]?.pressed;
+}
+
+// ── Touch / Joystick ──────────────────────────────────────
+const joyState = { active:false, id:-1, cx:100, cy:100, dx:0, dy:0 };
+const touchBtns = { accel:false, brake:false, hb:false };
+
+function initTouch() {
+  const joyZone = document.getElementById('joy-zone');
+  const knob    = document.getElementById('joy-knob');
+  const JR      = 50; // max knob radius
+
+  function joyPos(touch) {
+    const r = joyZone.getBoundingClientRect();
+    return { x: touch.clientX - r.left - 80, y: touch.clientY - r.top - 80 };
+  }
+
+  joyZone.addEventListener('touchstart', e => {
+    e.preventDefault();
+    const t = e.changedTouches[0];
+    joyState.active=true; joyState.id=t.identifier;
+    const p=joyPos(t); joyState.dx=p.x; joyState.dy=p.y;
+    updateKnob();
+  },{passive:false});
+
+  window.addEventListener('touchmove', e => {
+    if(!joyState.active) return;
+    e.preventDefault();
+    for(let t of e.changedTouches) {
+      if(t.identifier===joyState.id){
+        const p=joyPos(t);
+        const len=Math.sqrt(p.x*p.x+p.y*p.y);
+        if(len>JR){ const s=JR/len; p.x*=s; p.y*=s; }
+        joyState.dx=p.x; joyState.dy=p.y;
+        updateKnob();
+      }
+    }
+  },{passive:false});
+
+  window.addEventListener('touchend', e => {
+    for(let t of e.changedTouches){
+      if(t.identifier===joyState.id){
+        joyState.active=false; joyState.dx=0; joyState.dy=0;
+        knob.style.transform='translate(0,0)';
+      }
+    }
+  });
+
+  function updateKnob() {
+    knob.style.transform=`translate(${joyState.dx}px,${joyState.dy}px)`;
+  }
+
+  // Action buttons
+  function bindBtn(id, key) {
+    const el = document.getElementById(id);
+    el.addEventListener('touchstart', e=>{ e.preventDefault(); touchBtns[key]=true;  el.classList.add('pressed'); },{passive:false});
+    el.addEventListener('touchend',   e=>{ e.preventDefault(); touchBtns[key]=false; el.classList.remove('pressed'); },{passive:false});
+  }
+  bindBtn('btn-accel','accel');
+  bindBtn('btn-brake','brake');
+  bindBtn('btn-hb',   'hb');
+}
+
+function readTouch() {
+  const DEAD = 0.25;
+  const nx   = joyState.dx / 50; // -1..1
+  const ny   = joyState.dy / 50;
+  K.left  = nx < -DEAD;
+  K.right = nx >  DEAD;
+  K.accel = touchBtns.accel || ny < -DEAD;
+  K.brake = touchBtns.brake || ny >  DEAD;
+  K.hb    = touchBtns.hb;
+}
+
+// ── Input mode selector ───────────────────────────────────
+function showGamepadHints() {
+  document.getElementById('hints').innerHTML =
+    'A / RT &nbsp;Acelerar<br>B / LT &nbsp;Frenar<br>Stick &nbsp;&nbsp;&nbsp;Dirección<br>X/LB/RB &nbsp;Hand-brake';
+}
+function showTouchHints() {
+  document.getElementById('hints').innerHTML =
+    'Joystick izq → dirección<br>▲ Acelerar &nbsp; ▼ Frenar<br>HB → freno de mano';
+}
+
+window.selectInput = function(mode) {
+  inputMode = mode;
+  document.getElementById('input-selector').style.display='none';
+  const tc = document.getElementById('touch-controls');
+
+  if(mode==='touch') {
+    tc.classList.add('active');
+    document.getElementById('hints').style.display='none';
+    showTouchHints();
+    document.getElementById('hints').style.display='block';
+  } else {
+    tc.classList.remove('active');
+  }
+  if(mode==='gamepad') showGamepadHints();
+  if(mode==='keyboard') {
+    document.getElementById('hints').innerHTML =
+      'W / ↑ &nbsp;Acelerar<br>S / ↓ &nbsp;Frenar / Rev<br>A / ← &nbsp;Izquierda<br>D / → &nbsp;Derecha<br>ESPACIO &nbsp;Hand-brake<br>R &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Reset auto<br>E &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Editor circuito';
+  }
+  // Start race after first input selection
+  if(gameMode==='race') startCountdown();
+};
+
+// ── Master read (called each frame) ──────────────────────
+function readInput() {
+  if(inputMode==='keyboard') readKeyboard();
+  else if(inputMode==='gamepad') readGamepad();
+  else if(inputMode==='touch') readTouch();
+}
+
+// Auto-detect mobile and pre-select touch
+if(/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
+  // Pre-highlight touch button visually but still show selector
+  document.querySelector('.isel-btn:last-child').style.borderColor='#00ffaa88';
+}
 
 // ═══════════════════════════════════════════════════════════
 //  PHYSICS UPDATE
@@ -576,12 +827,13 @@ function canDrive() {
 
 function updatePhysics() {
   if (!canDrive()) return;
+  readInput();
 
-  const accel = K['KeyW']||K['ArrowUp'];
-  const brake = K['KeyS']||K['ArrowDown'];
-  const left  = K['KeyA']||K['ArrowLeft'];
-  const right = K['KeyD']||K['ArrowRight'];
-  const hb    = K['Space'];
+  const accel = K.accel;
+  const brake = K.brake;
+  const left  = K.left;
+  const right = K.right;
+  const hb    = K.hb;
 
   if (accel) CAR.speed = Math.min(CAR.speed + ACCEL, MAX_SPEED);
   else if (brake) {
@@ -612,35 +864,37 @@ function updatePhysics() {
 }
 
 function updateCarMesh() {
+  // Move the whole car group – body parts stay rigid inside, no individual rotations
   carMesh.position.copy(CAR.pos);
   carMesh.position.y = 0;
   carMesh.rotation.y = CAR.rot;
 
-  // Body pitch / roll feel
-  carBodyMesh.rotation.x = -CAR.speed * 2.5;
-  carBodyMesh.rotation.z = -CAR.steer * Math.abs(CAR.speed) * 1.8;
+  // Subtle body lean – rotate the BODY mesh only on its local axes
+  // This is cosmetic only; it doesn't affect wheel positions
+  carBodyMesh.rotation.x = -CAR.speed * 2.2;
+  carBodyMesh.rotation.z = -CAR.steer * Math.abs(CAR.speed) * 1.5;
 
   // Wheels
   wheelMeshes.forEach(w => {
-    // Roll (spinning) – on LOCAL X axis of the group
-    // The tire mesh inside has rotation.z = PI/2, so its roll axis in world = group's X
-    // We just set group.rotation.x which IS the roll axis after the group is oriented
-    w.rotation.x = CAR.wheelRot;
-
-    // Front wheels: also steer on Y
+    // Steering (front wheels only): steerGrp.rotation.y
     if (w.userData.front) {
-      w.rotation.y = CAR.steer;
+      w.rotation.y = CAR.steer * 0.55;
     }
 
-    // Suspension bounce
-    const bounce = Math.sin(Date.now()*.018 + w.userData.baseZ) * .02 * Math.abs(CAR.speed/MAX_SPEED);
-    w.position.y = .42 + bounce;
+    // Roll: rollGrp.rotation.x  ← independent axis, no gimbal conflict
+    // CAR.wheelRot accumulates in radians: Δangle = speed / radius
+    w.userData.roll.rotation.x = CAR.wheelRot;
+
+    // Suspension
+    const bounce = Math.sin(Date.now() * .018 + w.userData.baseY) * .018 * Math.abs(CAR.speed / MAX_SPEED);
+    w.position.y = w.userData.baseY + bounce;
   });
 
-  // Exhaust
-  if (Math.random() < Math.abs(CAR.speed/MAX_SPEED) * .6) spawnExhaust();
+  // Exhaust particles
+  if (Math.random() < Math.abs(CAR.speed / MAX_SPEED) * .55) spawnExhaust();
   updateExhaust();
 }
+
 
 // ═══════════════════════════════════════════════════════════
 //  EXHAUST PARTICLES
@@ -977,6 +1231,7 @@ function animate() {
 // ═══════════════════════════════════════════════════════════
 async function init() {
   const pf = document.getElementById('pf');
+  initTouch();
   buildLights();    pf.style.width='25%';
   buildTrack();     pf.style.width='55%';
   buildScenery();   pf.style.width='80%';
@@ -986,7 +1241,7 @@ async function init() {
   pf.style.width='100%';
   await new Promise(r=>setTimeout(r,200));
   document.getElementById('loading').style.display='none';
-  setTimeout(()=>{ if(gameMode==='race') startCountdown(); },300);
+  // Countdown starts after user selects input method
   animate();
 }
 
