@@ -459,443 +459,236 @@ function buildScenery() {
 }
 
 // ═══════════════════════════════════════════════════════════
-//  CAR
+//  CAR — physics state
 // ═══════════════════════════════════════════════════════════
 const CAR = {
-  pos: new THREE.Vector3(4,0,2),
-  rot: 0,           // yaw radians
-  speed: 0,
-  steer: 0,
-  wheelRot: 0,      // cumulative roll of wheels (radians)
+  pos:   new THREE.Vector3(4, 0, 2),
+  dir:   new THREE.Vector3(0, 0, 1), // unit forward vector (world space)
+  vel:   new THREE.Vector3(0, 0, 0), // world-space velocity
+  speed: 0,   // signed longitudinal speed (m/frame)
+  steer: 0,   // current wheel steer angle (rad), smoothed
+  rot:   0,   // yaw angle (rad) — derived from dir, used for camera/minimap
+  wheelRot: 0,
 };
 
-let carMesh, wheelMeshes=[], carBodyMesh, exhaustPtcls=[];
+// ── BUILD CAR ─────────────────────────────────────────────
+let carMesh, wheelMeshes = [], carBodyMesh, exhaustPtcls = [];
 
 function buildCar() {
   if (carMesh) scene.remove(carMesh);
-  carMesh = new THREE.Group();
+  carMesh     = new THREE.Group();
   wheelMeshes = [];
 
-  const matRed    = new THREE.MeshLambertMaterial({color:0xff2200});
-  const matDark   = new THREE.MeshLambertMaterial({color:0xcc1a00});
-  const matCarbon = new THREE.MeshLambertMaterial({color:0x1a1a1a});
-  const matGlass  = new THREE.MeshLambertMaterial({color:0x88ccff,transparent:true,opacity:.55});
-  const matHL     = new THREE.MeshBasicMaterial({color:0xffffaa});
-  const matTL     = new THREE.MeshBasicMaterial({color:0xff1111});
+  // Materials
+  const mRed  = new THREE.MeshLambertMaterial({ color: 0xdd1a00 });
+  const mDark = new THREE.MeshLambertMaterial({ color: 0xaa1200 });
+  const mCarb = new THREE.MeshLambertMaterial({ color: 0x111111 });
+  const mGrey = new THREE.MeshLambertMaterial({ color: 0x555555 });
+  const mGlas = new THREE.MeshLambertMaterial({ color: 0x88bbff, transparent: true, opacity: .5 });
+  const mHL   = new THREE.MeshBasicMaterial({ color: 0xffffcc });
+  const mTL   = new THREE.MeshBasicMaterial({ color: 0xff1100 });
 
-  function box(w,h,d,mat,px,py,pz,rx) {
-    const m = new THREE.Mesh(new THREE.BoxGeometry(w,h,d), mat);
-    m.position.set(px,py,pz);
-    if(rx) m.rotation.x = rx;
+  function mk(geo, mat, px, py, pz, rx, ry) {
+    const m = new THREE.Mesh(geo, mat);
+    m.position.set(px, py, pz);
+    if (rx) m.rotation.x = rx;
+    if (ry) m.rotation.y = ry;
+    m.castShadow = true;
+    carMesh.add(m);
+    return m;
+  }
+  function box(w, h, d, mat, px, py, pz, rx, ry) {
+    return mk(new THREE.BoxGeometry(w, h, d), mat, px, py, pz, rx, ry);
+  }
+  function cyl(rt, rb, h, seg, mat, px, py, pz, rz) {
+    const m = new THREE.Mesh(new THREE.CylinderGeometry(rt, rb, h, seg), mat);
+    m.position.set(px, py, pz);
+    if (rz !== undefined) m.rotation.z = rz;
     m.castShadow = true;
     carMesh.add(m);
     return m;
   }
 
-  // Body – all static, NO individual rotation overrides in updateCarMesh
-  carBodyMesh = box(2.2,.55,4.5, matRed,    0, .28,  0);
-  box(1.8,.35,.8,  matRed,    0, .18,  2.4);    // nose
-  box(2.0,.22,.6,  matDark,   0, .13, -2.3);    // diffuser
-  box(1.7,.65,2.1, matDark,   0, .86, -.2);     // cabin
-  box(1.55,.5,.08, matGlass,  0, 1.0,  .82, -.28); // windshield F
-  box(1.55,.42,.08,matGlass,  0, .94,-1.25,  .32); // windshield R
-  box(2.2,.07,.6,  matCarbon, 0,1.18,-2.05);    // spoiler blade
-  box(.1,.52,.1,   matCarbon,  .85,.9,-2.05);   // spoiler pole R
-  box(.1,.52,.1,   matCarbon, -.85,.9,-2.05);   // spoiler pole L
-  box(.12,.2,3.8,  matCarbon,  1.17,.11,-.1);   // skirt R
-  box(.12,.2,3.8,  matCarbon, -1.17,.11,-.1);   // skirt L
-
+  // ── BODY ──────────────────────────────────────────────────
+  // The carMesh group never gets its children individually rotated in update.
+  // Only carMesh.position and carMesh.quaternion change.
+  carBodyMesh = box(2.0, 0.40, 4.2, mRed,   0, 0.20,  0.0);  // main body slab
+  box(1.6, 0.22, 1.0, mRed,   0, 0.40,  1.5);  // front hood rise
+  box(1.8, 0.55, 1.8, mDark,  0, 0.62, -0.2);  // cabin volume
+  box(1.3, 0.08, 1.2, mGlas,  0, 0.90,  0.5,  -0.30);  // windshield F
+  box(1.3, 0.08, 1.0, mGlas,  0, 0.88, -1.0,   0.32);  // windshield R
+  box(2.0, 0.06, 0.55,mCarb,  0, 1.02, -1.85); // spoiler blade
+  box(0.06,0.40, 0.08,mCarb,  0.82, 0.82, -1.85); // spoiler pole R
+  box(0.06,0.40, 0.08,mCarb, -0.82, 0.82, -1.85); // spoiler pole L
+  box(0.10, 0.18, 3.6, mCarb,  1.08, 0.09, 0.0);  // side skirt R
+  box(0.10, 0.18, 3.6, mCarb, -1.08, 0.09, 0.0);  // side skirt L
+  box(1.6, 0.10, 0.50, mCarb,  0, 0.05, -2.0);   // diffuser
+  box(1.6, 0.30, 0.10, mCarb,  0, 0.14,  2.15);  // front splitter
   // Headlights
-  [-.72,.72].forEach(x => box(.34,.17,.08, matHL, x,.28,2.8));
-  // Tail lights
-  [-.72,.72].forEach(x => box(.44,.17,.08, matTL, x,.28,-2.62));
+  box(0.30, 0.14, 0.06, mHL,  0.65, 0.26, 2.18);
+  box(0.30, 0.14, 0.06, mHL, -0.65, 0.26, 2.18);
+  // Taillights
+  box(0.38, 0.14, 0.06, mTL,  0.62, 0.26, -2.12);
+  box(0.38, 0.14, 0.06, mTL, -0.62, 0.26, -2.12);
 
-  // ── WHEELS: two-group hierarchy ──────────────────────────────────────
-  // steerGroup (parent, handles Y = steering, sits at wheel position)
-  //   └─ rollGroup  (child,  handles X = spinning)
-  //        ├─ tire mesh  (rotation.z = PI/2 at build time, never touched again)
-  //        └─ rim mesh   (same)
-  //
-  // This separation is the KEY fix: Three.js Euler order ZYX means if you
-  // set rotation.x AND rotation.y on the same object you get gimbal issues.
-  // Separating them into parent/child avoids it completely.
+  // ── WHEELS — two-pivot hierarchy ──────────────────────────
+  // steerPivot  (Y → steering yaw)
+  //   rollPivot (X → spinning via quaternion)
+  //     tire mesh (rotation.z = PI/2 baked in, NEVER touched again)
 
-  const tireGeo = new THREE.CylinderGeometry(.42,.42,.38,20);
-  const tireMat = new THREE.MeshLambertMaterial({color:0x111111});
-  const rimGeo  = new THREE.CylinderGeometry(.27,.27,.40,14);
-  const rimMat  = new THREE.MeshLambertMaterial({color:0xcccccc});
-  const discGeo = new THREE.CylinderGeometry(.18,.18,.06,10);
-  const discMat = new THREE.MeshLambertMaterial({color:0x555555});
+  const tireGeo = new THREE.CylinderGeometry(0.40, 0.40, 0.34, 22);
+  const tireMat = new THREE.MeshLambertMaterial({ color: 0x111111 });
+  const rimGeo  = new THREE.CylinderGeometry(0.24, 0.24, 0.36, 14);
+  const rimMat  = new THREE.MeshLambertMaterial({ color: 0xcccccc });
+  const hubGeo  = new THREE.CylinderGeometry(0.08, 0.08, 0.37, 8);
+  const hubMat  = new THREE.MeshLambertMaterial({ color: 0x888888 });
 
-  [{x:-1.18,z:1.6,front:true},{x:1.18,z:1.6,front:true},
-   {x:-1.18,z:-1.5,front:false},{x:1.18,z:-1.5,front:false}].forEach(def => {
+  const WHEEL_CFG = [
+    { x: -1.10, z:  1.55, front: true  },
+    { x:  1.10, z:  1.55, front: true  },
+    { x: -1.10, z: -1.45, front: false },
+    { x:  1.10, z: -1.45, front: false },
+  ];
 
-    const steerGrp = new THREE.Group();
-    steerGrp.position.set(def.x, .42, def.z);
-    steerGrp.userData.front = def.front;
-    steerGrp.userData.baseY = .42;
-    carMesh.add(steerGrp);
+  WHEEL_CFG.forEach(cfg => {
+    // steerPivot — sits at wheel position in car space
+    const sp = new THREE.Group();
+    sp.position.set(cfg.x, 0.40, cfg.z);
+    sp.userData.front = cfg.front;
+    sp.userData.baseY = 0.40;
+    carMesh.add(sp);
 
-    const rollGrp = new THREE.Group();
-    steerGrp.add(rollGrp);
-    steerGrp.userData.roll = rollGrp;
+    // rollPivot — child, handles spin
+    const rp = new THREE.Group();
+    sp.userData.roll = rp;
+    sp.add(rp);
 
-    // Tire: CylinderGeometry spin axis = local Y.
-    // We rotate Z 90° once so the spin axis aligns with world X (the axle).
-    // After that, rollGrp.rotation.x drives the spinning correctly.
+    // Tire: CylinderGeometry default spin axis = Y.
+    // Bake rotation.z = PI/2 so the spin axis becomes local X of rollPivot.
+    // From now on ONLY rollPivot.rotation.x is updated (the spin).
+    // steerPivot.rotation.y handles turning. No other rotations ever touch these.
     const tire = new THREE.Mesh(tireGeo, tireMat);
-    tire.rotation.z = Math.PI/2;
+    tire.rotation.z = Math.PI / 2;
     tire.castShadow = true;
-    rollGrp.add(tire);
+    rp.add(tire);
 
     const rim = new THREE.Mesh(rimGeo, rimMat);
-    rim.rotation.z = Math.PI/2;
-    rollGrp.add(rim);
+    rim.rotation.z = Math.PI / 2;
+    rp.add(rim);
 
-    // Brake disc – offset outward on X, same orientation
-    const disc = new THREE.Mesh(discGeo, discMat);
-    disc.rotation.z = Math.PI/2;
-    disc.position.x = def.x > 0 ? .21 : -.21;
-    rollGrp.add(disc);
+    const hub = new THREE.Mesh(hubGeo, hubMat);
+    hub.rotation.z = Math.PI / 2;
+    rp.add(hub);
 
-    wheelMeshes.push(steerGrp);
+    wheelMeshes.push(sp);
   });
 
   carMesh.position.copy(CAR.pos);
-  carMesh.rotation.y = CAR.rot;
   scene.add(carMesh);
 }
 
-
-// ═══════════════════════════════════════════════════════════
-//  COLLISION
-// ═══════════════════════════════════════════════════════════
-
-// Static AABB colliders [cx, cz, half-width, half-depth]
-// Add any scenery box here to give it a collision body
-const STATIC_COLLIDERS = [
-  // Grandstand
-  [0, 18, 18, 3.5],
-  // Tire barriers [x, z, hw, hd]
-  [90,-28, 4.5,.8], [90,-80, 4.5,.8], [55,-116, 4.5,.8], [55,5, 4.5,.8],
-  // Light poles (small radius = 0.5)
-  [-18,18,.5,.5],[18,18,.5,.5],[0,-130,.5,.5],[95,-55,.5,.5],[-75,-55,.5,.5],
-];
-const CAR_RADIUS = 1.3; // collision sphere radius
-
-function closestPointOnSegment(p, a, b) {
-  const ab = b.clone().sub(a);
-  const t  = Math.max(0, Math.min(1, p.clone().sub(a).dot(ab) / ab.lengthSq()));
-  return a.clone().addScaledVector(ab, t);
-}
-
-function resolveTrackCollision() {
-  const cp = CAR.pos.clone(); cp.y = 0;
-
-  // ── Track wall collisions ──────────────────────────────
-  let best = Infinity, bestIdx = 0;
-  trackBounds.forEach((b,i) => {
-    const d = cp.distanceTo(b.mid); if(d<best){best=d;bestIdx=i;}
-  });
-
-  const radius = 25;
-  for(let di=-radius; di<=radius; di++) {
-    const b = trackBounds[(bestIdx+di+trackBounds.length)%trackBounds.length];
-
-    const nearL = closestPointOnSegment(cp, b.lA, b.lB); nearL.y=0;
-    const dL = cp.distanceTo(nearL);
-    if(dL < CAR_RADIUS) {
-      CAR.pos.addScaledVector(b.nL, CAR_RADIUS - dL);
-      CAR.speed *= 0.5;
-    }
-
-    const nearR = closestPointOnSegment(cp, b.rA, b.rB); nearR.y=0;
-    const dR = cp.distanceTo(nearR);
-    if(dR < CAR_RADIUS) {
-      CAR.pos.addScaledVector(b.nR, CAR_RADIUS - dR);
-      CAR.speed *= 0.5;
-    }
-  }
-
-  // ── Static object AABB collisions ─────────────────────
-  STATIC_COLLIDERS.forEach(([cx,cz,hw,hd]) => {
-    const dx = CAR.pos.x - cx;
-    const dz = CAR.pos.z - cz;
-    const overlapX = (hw + CAR_RADIUS) - Math.abs(dx);
-    const overlapZ = (hd + CAR_RADIUS) - Math.abs(dz);
-
-    if(overlapX > 0 && overlapZ > 0) {
-      // Push out along axis of least overlap
-      if(overlapX < overlapZ) {
-        CAR.pos.x += dx > 0 ? overlapX : -overlapX;
-      } else {
-        CAR.pos.z += dz > 0 ? overlapZ : -overlapZ;
-      }
-      CAR.speed *= 0.45;
-    }
-  });
-}
-
-// ═══════════════════════════════════════════════════════════
-//  INPUT — keyboard / gamepad / touch
-// ═══════════════════════════════════════════════════════════
-let inputMode = 'keyboard'; // 'keyboard' | 'gamepad' | 'touch'
-
-// Virtual input state — all input sources write here
-const K = { accel:false, brake:false, left:false, right:false, hb:false };
-
-// ── Keyboard ──────────────────────────────────────────────
-const KB = {};
-window.addEventListener('keydown', e => {
-  KB[e.code]=true;
-  if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)) e.preventDefault();
-  if(e.code==='KeyE') openEditor();
-  if(e.code==='KeyR') resetCar();
-});
-window.addEventListener('keyup', e => { KB[e.code]=false; });
-
-function readKeyboard() {
-  K.accel = !!(KB['KeyW']||KB['ArrowUp']);
-  K.brake = !!(KB['KeyS']||KB['ArrowDown']);
-  K.left  = !!(KB['KeyA']||KB['ArrowLeft']);
-  K.right = !!(KB['KeyD']||KB['ArrowRight']);
-  K.hb    = !!KB['Space'];
-}
-
-// ── Gamepad ───────────────────────────────────────────────
-let gpIndex = -1;
-window.addEventListener('gamepadconnected', e => {
-  gpIndex = e.gamepad.index;
-  document.getElementById('gamepad-indicator').classList.add('active');
-  if(inputMode==='gamepad') showGamepadHints();
-});
-window.addEventListener('gamepaddisconnected', e => {
-  if(e.gamepad.index===gpIndex) {
-    gpIndex=-1;
-    document.getElementById('gamepad-indicator').classList.remove('active');
-  }
-});
-
-function readGamepad() {
-  if(gpIndex<0) return;
-  const gp = navigator.getGamepads()[gpIndex];
-  if(!gp) return;
-  // Standard mapping: axes[0]=Left stick X, axes[1]=Left stick Y
-  // buttons[0]=A(accel), buttons[1]=B(brake), buttons[6]=LT(hb)
-  // Also support D-pad: buttons[12]=up,13=down,14=left,15=right
-  const axX  = gp.axes[0] || 0;
-  const axY  = gp.axes[1] || 0;
-  const DEAD = 0.15;
-
-  K.accel = gp.buttons[0]?.pressed || gp.buttons[7]?.pressed || axY < -DEAD || gp.buttons[12]?.pressed;
-  K.brake = gp.buttons[1]?.pressed || gp.buttons[6]?.pressed || axY >  DEAD || gp.buttons[13]?.pressed;
-  K.left  = axX < -DEAD || gp.buttons[14]?.pressed;
-  K.right = axX >  DEAD || gp.buttons[15]?.pressed;
-  K.hb    = gp.buttons[2]?.pressed || gp.buttons[4]?.pressed || gp.buttons[5]?.pressed;
-}
-
-// ── Touch / Joystick ──────────────────────────────────────
-const joyState = { active:false, id:-1, cx:100, cy:100, dx:0, dy:0 };
-const touchBtns = { accel:false, brake:false, hb:false };
-
-function initTouch() {
-  const joyZone = document.getElementById('joy-zone');
-  const knob    = document.getElementById('joy-knob');
-  const JR      = 50; // max knob radius
-
-  function joyPos(touch) {
-    const r = joyZone.getBoundingClientRect();
-    return { x: touch.clientX - r.left - 80, y: touch.clientY - r.top - 80 };
-  }
-
-  joyZone.addEventListener('touchstart', e => {
-    e.preventDefault();
-    const t = e.changedTouches[0];
-    joyState.active=true; joyState.id=t.identifier;
-    const p=joyPos(t); joyState.dx=p.x; joyState.dy=p.y;
-    updateKnob();
-  },{passive:false});
-
-  window.addEventListener('touchmove', e => {
-    if(!joyState.active) return;
-    e.preventDefault();
-    for(let t of e.changedTouches) {
-      if(t.identifier===joyState.id){
-        const p=joyPos(t);
-        const len=Math.sqrt(p.x*p.x+p.y*p.y);
-        if(len>JR){ const s=JR/len; p.x*=s; p.y*=s; }
-        joyState.dx=p.x; joyState.dy=p.y;
-        updateKnob();
-      }
-    }
-  },{passive:false});
-
-  window.addEventListener('touchend', e => {
-    for(let t of e.changedTouches){
-      if(t.identifier===joyState.id){
-        joyState.active=false; joyState.dx=0; joyState.dy=0;
-        knob.style.transform='translate(0,0)';
-      }
-    }
-  });
-
-  function updateKnob() {
-    knob.style.transform=`translate(${joyState.dx}px,${joyState.dy}px)`;
-  }
-
-  // Action buttons
-  function bindBtn(id, key) {
-    const el = document.getElementById(id);
-    el.addEventListener('touchstart', e=>{ e.preventDefault(); touchBtns[key]=true;  el.classList.add('pressed'); },{passive:false});
-    el.addEventListener('touchend',   e=>{ e.preventDefault(); touchBtns[key]=false; el.classList.remove('pressed'); },{passive:false});
-  }
-  bindBtn('btn-accel','accel');
-  bindBtn('btn-brake','brake');
-  bindBtn('btn-hb',   'hb');
-}
-
-function readTouch() {
-  const DEAD = 0.25;
-  const nx   = joyState.dx / 50; // -1..1
-  const ny   = joyState.dy / 50;
-  K.left  = nx < -DEAD;
-  K.right = nx >  DEAD;
-  K.accel = touchBtns.accel || ny < -DEAD;
-  K.brake = touchBtns.brake || ny >  DEAD;
-  K.hb    = touchBtns.hb;
-}
-
-// ── Input mode selector ───────────────────────────────────
-function showGamepadHints() {
-  document.getElementById('hints').innerHTML =
-    'A / RT &nbsp;Acelerar<br>B / LT &nbsp;Frenar<br>Stick &nbsp;&nbsp;&nbsp;Dirección<br>X/LB/RB &nbsp;Hand-brake';
-}
-function showTouchHints() {
-  document.getElementById('hints').innerHTML =
-    'Joystick izq → dirección<br>▲ Acelerar &nbsp; ▼ Frenar<br>HB → freno de mano';
-}
-
-window.selectInput = function(mode) {
-  inputMode = mode;
-  document.getElementById('input-selector').style.display='none';
-  const tc = document.getElementById('touch-controls');
-
-  if(mode==='touch') {
-    tc.classList.add('active');
-    document.getElementById('hints').style.display='none';
-    showTouchHints();
-    document.getElementById('hints').style.display='block';
-  } else {
-    tc.classList.remove('active');
-  }
-  if(mode==='gamepad') showGamepadHints();
-  if(mode==='keyboard') {
-    document.getElementById('hints').innerHTML =
-      'W / ↑ &nbsp;Acelerar<br>S / ↓ &nbsp;Frenar / Rev<br>A / ← &nbsp;Izquierda<br>D / → &nbsp;Derecha<br>ESPACIO &nbsp;Hand-brake<br>R &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Reset auto<br>E &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Editor circuito';
-  }
-  // Start race after first input selection
-  if(gameMode==='race') startCountdown();
-};
-
-// ── Master read (called each frame) ──────────────────────
-function readInput() {
-  if(inputMode==='keyboard') readKeyboard();
-  else if(inputMode==='gamepad') readGamepad();
-  else if(inputMode==='touch') readTouch();
-}
-
-// Auto-detect mobile and pre-select touch
-if(/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
-  // Pre-highlight touch button visually but still show selector
-  document.querySelector('.isel-btn:last-child').style.borderColor='#00ffaa88';
-}
-
-// ═══════════════════════════════════════════════════════════
-//  PHYSICS UPDATE
-// ═══════════════════════════════════════════════════════════
-const MAX_SPEED   = 0.88;
-const MAX_REV     = 0.22;
-const ACCEL       = 0.011;
-const BRAKE_F     = 0.024;
-const FRICTION    = 0.012;
-const HB_FRICTION = 0.09;
-const TURN_BASE   = 0.032;
+// ── PHYSICS ───────────────────────────────────────────────
+const MAX_SPEED    = 0.75;
+const MAX_REV      = 0.20;
+const ACCEL        = 0.010;
+const BRAKE_F      = 0.022;
+const FRICTION     = 0.013;
+const HB_FRICTION  = 0.10;
+const TURN_SPEED   = 0.038;  // yaw rate at full speed
+const LATERAL_GRIP = 0.82;   // 0=full drift, 1=no lateral slip
+const STEER_MAX    = 0.55;   // max wheel steer angle (rad)
+const STEER_LERP   = 0.14;
 
 function canDrive() {
-  return gameMode==='free' || (raceStarted && !raceFinished);
+  return gameMode === 'free' || (raceStarted && !raceFinished);
 }
 
 function updatePhysics() {
   if (!canDrive()) return;
   readInput();
 
-  const accel = K.accel;
-  const brake = K.brake;
-  const left  = K.left;
-  const right = K.right;
-  const hb    = K.hb;
+  const accel = K.accel, brake = K.brake, left = K.left, right = K.right, hb = K.hb;
 
+  // ── Longitudinal ──────────────────────────────────────
   if (accel) CAR.speed = Math.min(CAR.speed + ACCEL, MAX_SPEED);
   else if (brake) {
-    if (CAR.speed > 0.005) CAR.speed = Math.max(CAR.speed - BRAKE_F, 0);
-    else CAR.speed = Math.max(CAR.speed - ACCEL*.6, -MAX_REV);
+    if (CAR.speed > 0.002) CAR.speed = Math.max(CAR.speed - BRAKE_F, 0);
+    else CAR.speed = Math.max(CAR.speed - ACCEL * 0.6, -MAX_REV);
   }
-
-  if (hb)            CAR.speed *= (1 - HB_FRICTION);
+  if (hb)              CAR.speed *= (1 - HB_FRICTION);
   else if (!accel && !brake) CAR.speed *= (1 - FRICTION);
 
-  const absSpd  = Math.abs(CAR.speed);
-  const turnAmt = TURN_BASE * Math.min(absSpd/MAX_SPEED, 1) * (CAR.speed >= 0 ? 1 : -1);
-  if (left)  CAR.rot += turnAmt;
-  if (right) CAR.rot -= turnAmt;
+  // ── Steering ──────────────────────────────────────────
+  const targetSteer = left ? STEER_MAX : right ? -STEER_MAX : 0;
+  CAR.steer += (targetSteer - CAR.steer) * STEER_LERP;
 
-  // Target steer angle for front wheels
-  CAR.steer += ((left ? .5 : right ? -.5 : 0) - CAR.steer) * .18;
+  // Yaw: turn rate proportional to speed & steer
+  const absSpd = Math.abs(CAR.speed);
+  const yawRate = TURN_SPEED * (absSpd / MAX_SPEED) * CAR.steer * (CAR.speed >= 0 ? 1 : -1);
+  CAR.rot += yawRate;
 
-  // Move
-  const dir = new THREE.Vector3(Math.sin(CAR.rot), 0, Math.cos(CAR.rot));
-  CAR.pos.addScaledVector(dir, CAR.speed);
+  // Keep rot in [-PI, PI]
+  if (CAR.rot >  Math.PI) CAR.rot -= Math.PI * 2;
+  if (CAR.rot < -Math.PI) CAR.rot += Math.PI * 2;
+
+  // Update direction from rot
+  CAR.dir.set(Math.sin(CAR.rot), 0, Math.cos(CAR.rot));
+
+  // ── Velocity with lateral grip ─────────────────────────
+  // Desired velocity = forward * speed
+  const desired = CAR.dir.clone().multiplyScalar(CAR.speed);
+  // Blend current velocity toward desired (lateral grip simulation)
+  CAR.vel.lerp(desired, LATERAL_GRIP);
+  // Clamp magnitude
+  const vlen = CAR.vel.length();
+  if (vlen > MAX_SPEED) CAR.vel.multiplyScalar(MAX_SPEED / vlen);
+
+  // ── Move ──────────────────────────────────────────────
+  CAR.pos.add(CAR.vel);
   CAR.pos.y = 0;
 
   resolveTrackCollision();
 
-  // Wheel roll: circumference ≈ 2π*r = 2π*.42 ≈ 2.64
-  CAR.wheelRot += CAR.speed / .42;  // radians
+  // Wheel roll accumulation
+  CAR.wheelRot += CAR.speed / 0.40;
 }
 
-function updateCarMesh() {
-  // Move the whole car group – body parts stay rigid inside, no individual rotations
-  carMesh.position.copy(CAR.pos);
-  carMesh.position.y = 0;
-  carMesh.rotation.y = CAR.rot;
+// ── UPDATE MESH ───────────────────────────────────────────
+// Quaternion-based yaw so there's zero Euler order ambiguity
+const _qYaw = new THREE.Quaternion();
+const _axisY = new THREE.Vector3(0, 1, 0);
+const _qRoll = new THREE.Quaternion();
+const _axisX = new THREE.Vector3(1, 0, 0);
 
-  // Subtle body lean – rotate the BODY mesh only on its local axes
-  // This is cosmetic only; it doesn't affect wheel positions
-  carBodyMesh.rotation.x = -CAR.speed * 2.2;
-  carBodyMesh.rotation.z = -CAR.steer * Math.abs(CAR.speed) * 1.5;
+function updateCarMesh() {
+  // Position
+  carMesh.position.copy(CAR.pos);
+
+  // Yaw — single quaternion rotation, no Euler at all on carMesh
+  _qYaw.setFromAxisAngle(_axisY, CAR.rot);
+  carMesh.quaternion.copy(_qYaw);
 
   // Wheels
   wheelMeshes.forEach(w => {
-    // Steering (front wheels only): steerGrp.rotation.y
-    if (w.userData.front) {
-      w.rotation.y = CAR.steer * 0.55;
-    }
+    // Steering (front only): steerPivot.rotation.y — isolated axis, no conflict
+    w.rotation.y = w.userData.front ? CAR.steer : 0;
 
-    // Roll: rollGrp.rotation.x  ← independent axis, no gimbal conflict
-    // CAR.wheelRot accumulates in radians: Δangle = speed / radius
-    w.userData.roll.rotation.x = CAR.wheelRot;
+    // Roll: rollPivot via quaternion on X axis — no Euler order issue
+    _qRoll.setFromAxisAngle(_axisX, CAR.wheelRot);
+    w.userData.roll.quaternion.copy(_qRoll);
 
-    // Suspension
-    const bounce = Math.sin(Date.now() * .018 + w.userData.baseY) * .018 * Math.abs(CAR.speed / MAX_SPEED);
+    // Suspension bounce
+    const t = Date.now() * 0.015 + w.userData.baseY;
+    const bounce = Math.sin(t) * 0.015 * Math.min(absSpeed(), 1);
     w.position.y = w.userData.baseY + bounce;
   });
 
-  // Exhaust particles
-  if (Math.random() < Math.abs(CAR.speed / MAX_SPEED) * .55) spawnExhaust();
+  // Exhaust
+  if (Math.random() < Math.min(absSpeed(), 1) * 0.5) spawnExhaust();
   updateExhaust();
 }
 
-
+function absSpeed() { return Math.abs(CAR.speed) / MAX_SPEED; }
 // ═══════════════════════════════════════════════════════════
 //  EXHAUST PARTICLES
 // ═══════════════════════════════════════════════════════════
@@ -1035,7 +828,8 @@ window.setMode = function(m) {
 
 function resetCar() {
   CAR.pos.set(4,0,2); CAR.rot=0; CAR.speed=0; CAR.steer=0; CAR.wheelRot=0;
-  if(carMesh){ carMesh.position.copy(CAR.pos); carMesh.rotation.y=CAR.rot; }
+  CAR.vel.set(0,0,0); CAR.dir.set(0,0,1);
+  if(carMesh){ carMesh.position.copy(CAR.pos); carMesh.quaternion.identity(); }
 }
 
 // ═══════════════════════════════════════════════════════════
