@@ -1,0 +1,863 @@
+{
+  "version": 2,
+  "name": "circuito_01",
+  "gridSize": 1,
+  "lighting": {
+    "ambient": 0.75,
+    "sun": 1.8,
+    "track": 1.2,
+    "tod": "noon",
+    "fog": 30
+  },
+  "tiles": [
+    {
+      "model": "roadStraightLong",
+      "x": 0,
+      "y": 0,
+      "z": 1,
+      "rotY": 0,
+      "scale": 1
+    },
+    {
+      "model": "roadStraightLong",
+      "x": 0,
+      "y": 0,
+      "z": -1,
+      "rotY": 0,
+      "scale": 1
+    },
+    {
+      "model": "roadStraightLong",
+      "x": 0,
+      "y": 0,
+      "z": 3,
+      "rotY": 0,
+      "scale": 1
+    },
+    {
+      "model": "roadStraightLong",
+      "x": 0,
+      "y": 0,
+      "z": 5,
+      "rotY": 0,
+      "scale": 1
+    },
+    {
+      "model": "roadStraightLong",
+      "x": 0,
+      "y": 0,
+      "z": 7,
+      "rotY": 0,
+      "scale": 1
+    },
+    {
+      "model": "roadStraightLong",
+      "x": 0,
+      "y": 0,
+      "z": -3,
+      "rotY": 0,
+      "scale": 1
+    },
+    {
+      "model": "roadCornerLarge",
+      "x": -2,
+      "y": 0,
+      "z": -7,
+      "rotY": 4.71238898038469,
+      "scale": 1
+    },
+    {
+      "model": "roadStraightLongMid",
+      "x": -4,
+      "y": 0,
+      "z": -7,
+      "rotY": 4.71238898038469,
+      "scale": 1
+    },
+    {
+      "model": "roadStraightLongMid",
+      "x": -6,
+      "y": 0,
+      "z": -7,
+      "rotY": 4.71238898038469,
+      "scale": 1
+    },
+    {
+      "model": "roadStraightArrow",
+      "x": -7,
+      "y": 0,
+      "z": -7,
+      "rotY": 4.71238898038469,
+      "scale": 1
+    },
+    {
+      "model": "roadStraightLong",
+      "x": -9,
+      "y": 0,
+      "z": -7,
+      "rotY": 4.71238898038469,
+      "scale": 1.1
+    },
+    {
+      "model": "roadCornerLarge",
+      "x": -11,
+      "y": 0,
+      "z": -3,
+      "rotY": 0,
+      "scale": 1.65
+    },
+    {
+      "model": "railDouble",
+      "x": 0,
+      "y": 0,
+      "z": -7,
+      "rotY": 0,
+      "scale": 1.1
+    },
+    {
+      "model": "railDouble",
+      "x": -1,
+      "y": 0,
+      "z": -7,
+      "rotY": 0,
+      "scale": 1.1
+    },
+    {
+      "model": "barrierWhite",
+      "x": -9,
+      "y": 0,
+      "z": -6,
+      "rotY": 4.71238898038469,
+      "scale": 1.1
+    },
+    {
+      "model": "billboardDouble_exclusive",
+      "x": 0,
+      "y": 0,
+      "z": -6,
+      "rotY": 4.71238898038469,
+      "scale": 0.8
+    },
+    {
+      "model": "billboardDouble_exclusive",
+      "x": -1,
+      "y": 0,
+      "z": -5,
+      "rotY": 4.71238898038469,
+      "scale": 0.8
+    },
+    {
+      "model": "grandStandRound",
+      "x": -10,
+      "y": 0,
+      "z": -7,
+      "rotY": 1.5707963267948966,
+      "scale": 2.35
+    },
+    {
+      "model": "grandStandCovered",
+      "x": -10,
+      "y": 0,
+      "z": -4,
+      "rotY": 1.5707963267948966,
+      "scale": 2.35
+    },
+    {
+      "model": "grandStandCovered",
+      "x": -10,
+      "y": 0,
+      "z": -2,
+      "rotY": 1.5707963267948966,
+      "scale": 2.35
+    },
+    {
+      "model": "grandStandCovered",
+      "x": -10,
+      "y": 0,
+      "z": 0,
+      "rotY": 1.5707963267948966,
+      "scale": 2.35
+    },
+    {
+      "model": "grandStandAwning",
+      "x": 0,
+      "y": 0,
+      "z": -3,
+      "rotY": 4.71238898038469,
+      "scale": 2.35
+    },
+    {
+      "model": "grandStandAwning",
+      "x": 0,
+      "y": 0,
+      "z": -1,
+      "rotY": 4.71238898038469,
+      "scale": 2.35
+    },
+    {
+      "model": "grandStandAwning",
+      "x": 0,
+      "y": 0,
+      "z": 1,
+      "rotY": 4.71238898038469,
+      "scale": 2.35
+    },
+    {
+      "model": "grandStandAwning",
+      "x": 0,
+      "y": 0,
+      "z": 3,
+      "rotY": 4.71238898038469,
+      "scale": 2.35
+    },
+    {
+      "model": "grandStandAwning",
+      "x": 0,
+      "y": 0,
+      "z": 5,
+      "rotY": 4.71238898038469,
+      "scale": 2.35
+    },
+    {
+      "model": "pitsGarage",
+      "x": 0,
+      "y": 0,
+      "z": -2,
+      "rotY": 1.5707963267948966,
+      "scale": 1.6
+    },
+    {
+      "model": "pitsGarage",
+      "x": 0,
+      "y": 0,
+      "z": 0,
+      "rotY": 1.5707963267948966,
+      "scale": 1.6
+    },
+    {
+      "model": "pitsGarage",
+      "x": 0,
+      "y": 0,
+      "z": 2,
+      "rotY": 1.5707963267948966,
+      "scale": 1.6
+    },
+    {
+      "model": "pitsGarage",
+      "x": 0,
+      "y": 0,
+      "z": 4,
+      "rotY": 1.5707963267948966,
+      "scale": 1.6
+    },
+    {
+      "model": "pitsGarageCorner",
+      "x": -2,
+      "y": 0,
+      "z": -2,
+      "rotY": 0,
+      "scale": 1.6
+    },
+    {
+      "model": "pitsOfficeRoof",
+      "x": -6,
+      "y": 0,
+      "z": -7,
+      "rotY": 3.141592653589793,
+      "scale": 1.6
+    },
+    {
+      "model": "pitsOfficeRoof",
+      "x": -4,
+      "y": 0,
+      "z": -7,
+      "rotY": 3.141592653589793,
+      "scale": 1.6
+    },
+    {
+      "model": "overheadRoundColored",
+      "x": -2,
+      "y": 0,
+      "z": -6,
+      "rotY": 3.141592653589793,
+      "scale": 0.2
+    },
+    {
+      "model": "overheadRoundColored",
+      "x": -1,
+      "y": 0,
+      "z": -6,
+      "rotY": 3.141592653589793,
+      "scale": 0.2
+    },
+    {
+      "model": "overheadRoundColored",
+      "x": -3,
+      "y": 0,
+      "z": -6,
+      "rotY": 3.141592653589793,
+      "scale": 0.2
+    },
+    {
+      "model": "overheadRoundColored",
+      "x": -7,
+      "y": 0,
+      "z": -6,
+      "rotY": 3.141592653589793,
+      "scale": 0.2
+    },
+    {
+      "model": "overheadRoundColored",
+      "x": -8,
+      "y": 0,
+      "z": -6,
+      "rotY": 3.141592653589793,
+      "scale": 0.2
+    },
+    {
+      "model": "roadStraightLongMid",
+      "x": 0,
+      "y": 0,
+      "z": 9,
+      "rotY": 0,
+      "scale": 1.1
+    },
+    {
+      "model": "roadCornerSmall",
+      "x": 0,
+      "y": 0,
+      "z": 7,
+      "rotY": 3.141592653589793,
+      "scale": 1.85
+    },
+    {
+      "model": "roadStraightLong",
+      "x": -6,
+      "y": 0,
+      "z": 9,
+      "rotY": 4.71238898038469,
+      "scale": 1.85
+    },
+    {
+      "model": "roadStraightLong",
+      "x": -9,
+      "y": 0,
+      "z": 9,
+      "rotY": 4.71238898038469,
+      "scale": 1.85
+    },
+    {
+      "model": "roadCornerLarge",
+      "x": -4,
+      "y": 0,
+      "z": 10,
+      "rotY": 1.5707963267948966,
+      "scale": 1.85
+    },
+    {
+      "model": "roadCornerLarge",
+      "x": -12,
+      "y": 0,
+      "z": 4,
+      "rotY": 4.71238898038469,
+      "scale": 1.85
+    },
+    {
+      "model": "roadStraightLongMid",
+      "x": -11,
+      "y": 0,
+      "z": 6,
+      "rotY": 0,
+      "scale": 1.85
+    },
+    {
+      "model": "roadStraightLongMid",
+      "x": -11,
+      "y": 0,
+      "z": 3,
+      "rotY": 0,
+      "scale": 1.85
+    },
+    {
+      "model": "roadStraightLongMid",
+      "x": -11,
+      "y": 0,
+      "z": 0,
+      "rotY": 0,
+      "scale": 1.85
+    }
+  ],
+  "surfaces": [],
+  "colliders": [
+    {
+      "x": 0.15000000000000002,
+      "y": 0,
+      "z": -0.6499999999999999,
+      "halfW": 0.5,
+      "halfH": 0.01,
+      "halfD": 1,
+      "rotY": 0,
+      "model": "roadStraightLong"
+    },
+    {
+      "x": 0.15000000000000002,
+      "y": 0,
+      "z": -2.65,
+      "halfW": 0.5,
+      "halfH": 0.01,
+      "halfD": 1,
+      "rotY": 0,
+      "model": "roadStraightLong"
+    },
+    {
+      "x": 0.15000000000000002,
+      "y": 0,
+      "z": 1.35,
+      "halfW": 0.5,
+      "halfH": 0.01,
+      "halfD": 1,
+      "rotY": 0,
+      "model": "roadStraightLong"
+    },
+    {
+      "x": 0.15000000000000002,
+      "y": 0,
+      "z": 3.3499999999999996,
+      "halfW": 0.5,
+      "halfH": 0.01,
+      "halfD": 1,
+      "rotY": 0,
+      "model": "roadStraightLong"
+    },
+    {
+      "x": 0.15000000000000002,
+      "y": 0,
+      "z": 5.35,
+      "halfW": 0.5,
+      "halfH": 0.01,
+      "halfD": 1,
+      "rotY": 0,
+      "model": "roadStraightLong"
+    },
+    {
+      "x": 0.15000000000000002,
+      "y": 0,
+      "z": -4.65,
+      "halfW": 0.5,
+      "halfH": 0.01,
+      "halfD": 1.0000000000000002,
+      "rotY": 0,
+      "model": "roadStraightLong"
+    },
+    {
+      "x": -0.3500000000000001,
+      "y": 0,
+      "z": -6.35,
+      "halfW": 1.0000000000000002,
+      "halfH": 0.01,
+      "halfD": 1,
+      "rotY": 4.71238898038469,
+      "model": "roadCornerLarge"
+    },
+    {
+      "x": -2.3499999999999996,
+      "y": 0,
+      "z": -6.85,
+      "halfW": 1,
+      "halfH": 0.01,
+      "halfD": 0.5,
+      "rotY": 4.71238898038469,
+      "model": "roadStraightLongMid"
+    },
+    {
+      "x": -4.35,
+      "y": 0,
+      "z": -6.85,
+      "halfW": 1,
+      "halfH": 0.01,
+      "halfD": 0.5,
+      "rotY": 4.71238898038469,
+      "model": "roadStraightLongMid"
+    },
+    {
+      "x": -5.85,
+      "y": 0,
+      "z": -6.85,
+      "halfW": 0.5,
+      "halfH": 0.01,
+      "halfD": 0.5,
+      "rotY": 4.71238898038469,
+      "model": "roadStraightArrow"
+    },
+    {
+      "x": -7.35,
+      "y": 0,
+      "z": -6.85,
+      "halfW": 1,
+      "halfH": 0.01,
+      "halfD": 0.5,
+      "rotY": 4.71238898038469,
+      "model": "roadStraightLong"
+    },
+    {
+      "x": -10.35,
+      "y": 0,
+      "z": -4.65,
+      "halfW": 1,
+      "halfH": 0.01,
+      "halfD": 1.0000000000000002,
+      "rotY": 0,
+      "model": "roadCornerLarge"
+    },
+    {
+      "x": 0.15000000554764176,
+      "y": 0.13,
+      "z": -7.625000017000099,
+      "halfW": 0.5000000055476548,
+      "halfH": 0.14,
+      "halfD": 0.02500001746869218,
+      "rotY": 0,
+      "model": "railDouble"
+    },
+    {
+      "x": -0.8499999944523584,
+      "y": 0.13,
+      "z": -7.625000017000099,
+      "halfW": 0.5000000055476548,
+      "halfH": 0.14,
+      "halfD": 0.02500001746869218,
+      "rotY": 0,
+      "model": "railDouble"
+    },
+    {
+      "x": -8.288499999999999,
+      "y": 0.05560000000000001,
+      "z": -6.225,
+      "halfW": 0.061499999999999666,
+      "halfH": 0.0656,
+      "halfD": 0.125,
+      "rotY": 4.71238898038469,
+      "model": "barrierWhite"
+    },
+    {
+      "x": 0.7919,
+      "y": 0.489999999999999,
+      "z": -5.913799999999999,
+      "halfW": 0.18190000000000012,
+      "halfH": 0.500000000000001,
+      "halfD": 0.5,
+      "rotY": 4.71238898038469,
+      "model": "billboardDouble_exclusive"
+    },
+    {
+      "x": -0.20809999999999998,
+      "y": 0.489999999999999,
+      "z": -4.913799999999999,
+      "halfW": 0.1819000000000001,
+      "halfH": 0.500000000000001,
+      "halfD": 0.5,
+      "rotY": 4.71238898038469,
+      "model": "billboardDouble_exclusive"
+    },
+    {
+      "x": -10.8316901265,
+      "y": 0.438131323,
+      "z": -7.468309845,
+      "halfW": 0.8183098735000005,
+      "halfH": 0.448131323,
+      "halfD": 0.8183098449999999,
+      "rotY": 1.5707963267948966,
+      "model": "grandStandRound"
+    },
+    {
+      "x": -11.14,
+      "y": 0.583195795,
+      "z": -4.15,
+      "halfW": 0.5099999999999998,
+      "halfH": 0.593195795,
+      "halfD": 0.5,
+      "rotY": 1.5707963267948966,
+      "model": "grandStandCovered"
+    },
+    {
+      "x": -11.14,
+      "y": 0.583195795,
+      "z": -2.1500000000000004,
+      "halfW": 0.5099999999999998,
+      "halfH": 0.593195795,
+      "halfD": 0.5000000000000001,
+      "rotY": 1.5707963267948966,
+      "model": "grandStandCovered"
+    },
+    {
+      "x": -11.14,
+      "y": 0.583195795,
+      "z": -0.15000000000000027,
+      "halfW": 0.5099999999999998,
+      "halfH": 0.593195795,
+      "halfD": 0.5000000000000001,
+      "rotY": 1.5707963267948966,
+      "model": "grandStandCovered"
+    },
+    {
+      "x": 1.15,
+      "y": 0.68255543,
+      "z": -2.8499999999999996,
+      "halfW": 0.5000000000000001,
+      "halfH": 0.69255543,
+      "halfD": 0.5,
+      "rotY": 4.71238898038469,
+      "model": "grandStandAwning"
+    },
+    {
+      "x": 1.15,
+      "y": 0.68255543,
+      "z": -0.8499999999999998,
+      "halfW": 0.5000000000000001,
+      "halfH": 0.69255543,
+      "halfD": 0.5000000000000001,
+      "rotY": 4.71238898038469,
+      "model": "grandStandAwning"
+    },
+    {
+      "x": 1.15,
+      "y": 0.68255543,
+      "z": 1.1500000000000004,
+      "halfW": 0.5000000000000001,
+      "halfH": 0.69255543,
+      "halfD": 0.5000000000000001,
+      "rotY": 4.71238898038469,
+      "model": "grandStandAwning"
+    },
+    {
+      "x": 1.15,
+      "y": 0.68255543,
+      "z": 3.1500000000000004,
+      "halfW": 0.5000000000000001,
+      "halfH": 0.69255543,
+      "halfD": 0.5,
+      "rotY": 4.71238898038469,
+      "model": "grandStandAwning"
+    },
+    {
+      "x": 1.15,
+      "y": 0.68255543,
+      "z": 5.15,
+      "halfW": 0.5000000000000001,
+      "halfH": 0.69255543,
+      "halfD": 0.5,
+      "rotY": 4.71238898038469,
+      "model": "grandStandAwning"
+    },
+    {
+      "x": -1.105000005,
+      "y": 0.33999999999999997,
+      "z": -2.1500000000000004,
+      "halfW": 0.5449999950000002,
+      "halfH": 0.35,
+      "halfD": 0.5000000000000001,
+      "rotY": 1.5707963267948966,
+      "model": "pitsGarage"
+    },
+    {
+      "x": -1.105000005,
+      "y": 0.33999999999999997,
+      "z": -0.15000000000000027,
+      "halfW": 0.5449999950000002,
+      "halfH": 0.35,
+      "halfD": 0.5000000000000001,
+      "rotY": 1.5707963267948966,
+      "model": "pitsGarage"
+    },
+    {
+      "x": -1.105000005,
+      "y": 0.33999999999999997,
+      "z": 1.8499999999999996,
+      "halfW": 0.5449999950000002,
+      "halfH": 0.35,
+      "halfD": 0.5000000000000001,
+      "rotY": 1.5707963267948966,
+      "model": "pitsGarage"
+    },
+    {
+      "x": -1.105000005,
+      "y": 0.33999999999999997,
+      "z": 3.8499999999999996,
+      "halfW": 0.5449999950000002,
+      "halfH": 0.35,
+      "halfD": 0.5,
+      "rotY": 1.5707963267948966,
+      "model": "pitsGarage"
+    },
+    {
+      "x": -1.8250000000000002,
+      "y": 0.33999999999999997,
+      "z": -3.15,
+      "halfW": 0.525,
+      "halfH": 0.35,
+      "halfD": 0.5,
+      "rotY": 0,
+      "model": "pitsGarageCorner"
+    },
+    {
+      "x": -6.15,
+      "y": 0.415751716,
+      "z": -5.869999999999999,
+      "halfW": 0.5,
+      "halfH": 0.425751716,
+      "halfD": 0.52,
+      "rotY": 3.141592653589793,
+      "model": "pitsOfficeRoof"
+    },
+    {
+      "x": -4.15,
+      "y": 0.415751716,
+      "z": -5.869999999999999,
+      "halfW": 0.5000000000000002,
+      "halfH": 0.425751716,
+      "halfD": 0.52,
+      "rotY": 3.141592653589793,
+      "model": "pitsOfficeRoof"
+    },
+    {
+      "x": -2.5834475400000003,
+      "y": 0.45672377,
+      "z": -5.185000008499999,
+      "halfW": 0.9334475400000001,
+      "halfH": 0.46672377,
+      "halfD": 0.16499999150000022,
+      "rotY": 3.141592653589793,
+      "model": "overheadRoundColored"
+    },
+    {
+      "x": -1.5834475400000003,
+      "y": 0.45672377,
+      "z": -5.185000008499999,
+      "halfW": 0.9334475400000001,
+      "halfH": 0.46672377,
+      "halfD": 0.16499999150000022,
+      "rotY": 3.141592653589793,
+      "model": "overheadRoundColored"
+    },
+    {
+      "x": -3.58344754,
+      "y": 0.45672377,
+      "z": -5.185000008499999,
+      "halfW": 0.9334475399999997,
+      "halfH": 0.46672377,
+      "halfD": 0.16499999150000022,
+      "rotY": 3.141592653589793,
+      "model": "overheadRoundColored"
+    },
+    {
+      "x": -7.583447540000001,
+      "y": 0.45672377,
+      "z": -5.185000008499999,
+      "halfW": 0.9334475400000004,
+      "halfH": 0.46672377,
+      "halfD": 0.16499999150000022,
+      "rotY": 3.141592653589793,
+      "model": "overheadRoundColored"
+    },
+    {
+      "x": -8.583447540000002,
+      "y": 0.45672377,
+      "z": -5.185000008499999,
+      "halfW": 0.9334475400000004,
+      "halfH": 0.46672377,
+      "halfD": 0.16499999150000022,
+      "rotY": 3.141592653589793,
+      "model": "overheadRoundColored"
+    },
+    {
+      "x": 0.15000000000000002,
+      "y": 0,
+      "z": 7.35,
+      "halfW": 0.5,
+      "halfH": 0.01,
+      "halfD": 1,
+      "rotY": 0,
+      "model": "roadStraightLongMid"
+    },
+    {
+      "x": -0.15000000000000022,
+      "y": 0,
+      "z": 8.15,
+      "halfW": 0.5000000000000001,
+      "halfH": 0.01,
+      "halfD": 0.5,
+      "rotY": 3.141592653589793,
+      "model": "roadCornerSmall"
+    },
+    {
+      "x": -4.35,
+      "y": 0,
+      "z": 9.15,
+      "halfW": 1,
+      "halfH": 0.01,
+      "halfD": 0.5,
+      "rotY": 4.71238898038469,
+      "model": "roadStraightLong"
+    },
+    {
+      "x": -7.35,
+      "y": 0,
+      "z": 9.15,
+      "halfW": 1,
+      "halfH": 0.01,
+      "halfD": 0.5,
+      "rotY": 4.71238898038469,
+      "model": "roadStraightLong"
+    },
+    {
+      "x": -5.65,
+      "y": 0,
+      "z": 9.35,
+      "halfW": 1,
+      "halfH": 0.01,
+      "halfD": 1,
+      "rotY": 1.5707963267948966,
+      "model": "roadCornerLarge"
+    },
+    {
+      "x": -10.35,
+      "y": 0,
+      "z": 4.65,
+      "halfW": 1,
+      "halfH": 0.01,
+      "halfD": 1,
+      "rotY": 4.71238898038469,
+      "model": "roadCornerLarge"
+    },
+    {
+      "x": -10.85,
+      "y": 0,
+      "z": 4.35,
+      "halfW": 0.5,
+      "halfH": 0.01,
+      "halfD": 1,
+      "rotY": 0,
+      "model": "roadStraightLongMid"
+    },
+    {
+      "x": -10.85,
+      "y": 0,
+      "z": 1.35,
+      "halfW": 0.5,
+      "halfH": 0.01,
+      "halfD": 1,
+      "rotY": 0,
+      "model": "roadStraightLongMid"
+    },
+    {
+      "x": -10.85,
+      "y": 0,
+      "z": -1.65,
+      "halfW": 0.5,
+      "halfH": 0.01,
+      "halfD": 1,
+      "rotY": 0,
+      "model": "roadStraightLongMid"
+    }
+  ]
+}
